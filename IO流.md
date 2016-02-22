@@ -354,3 +354,262 @@ class FileCopyDemoA
 	}
 }
 ```
+
+#### 1.6 Buffered
+
+##### 1.6.1 BufferedWriter
+
+缓冲区的出现是为了提高流的操作效率而出现的。
+所以在创建缓冲区之前，必须要现有流对象。
+该缓冲区中提供了一个跨平台的换行，`newLine()`。
+
+(19/BufferedWriterDemoA)
+
+```java
+import java.io.*;
+
+class BufferedWriterDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		FileWriter fw = new FileWriter("buf.txt", true);
+
+		BufferedWriter bufw = new BufferedWriter(fw);
+
+		for(int x = 0; x < 5; x++)
+		{
+			bufw.write("abcde" + x);
+			bufw.newLine();
+			bufw.flush();
+		}
+
+		bufw.close();
+	}
+}
+```
+
+##### 1.6.2 BufferedReader
+
+字符读取流缓冲区：
+该缓冲区提供了一个一次读一行的方法 `readLine()`，方便于对文本数据的读取。
+当 `readLine()` 返回空值 `null` 表示已读到文件末尾。
+`readLine()` 返回只返回每行回车符之前的内容，不包含回车符。
+
+```java
+import java.io.*;
+
+class FileReaderDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		FileReader fr = new FileReader("buf.txt");
+
+		//为了提高效率。加入缓冲技术。
+		//将字符读取流对象作为参数传递给缓冲对象的构造函数。
+		BufferedReader bufr = new BufferedReader(fr);
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			System.out.println(line);
+		}
+
+		fr.close();
+	}
+}
+```
+
+##### 1.6.3 Buffered 复制文件示例
+
+(19/CopyFileByBufDemoA)
+
+```java
+import java.io.*;
+
+class CopyFileByBufDemoA
+{
+	public static void main(String[] arg)
+	{
+		BufferedReader bufr = null;
+		BufferedWriter bufw = null;
+
+		try
+		{
+			bufr = new BufferedReader(new FileReader("buf.txt"));
+			bufw = new BufferedWriter(new FileWriter("buf_copy.txt"));
+
+			String line = null;
+
+			while((line = bufr.readLine()) != null)
+			{
+				bufw.write(line);
+				bufw.newLine();
+			}
+		}
+		catch(IOException e)
+		{
+			throw new RuntimeException("读写失败");
+		}
+		finally
+		{
+			try
+			{
+				if(bufr != null)
+				{
+					bufr.close();
+				}
+			}
+			catch(IOException e)
+			{
+				throw new RuntimeException("关闭读取文件失败");
+			}
+			try
+			{
+				if(bufw != null)
+				{
+					bufw.close();
+				}
+			}
+			catch(IOException e)
+			{
+				throw new RuntimeException("关闭写入文件失败");
+			}
+		}
+	}
+}
+```
+
+##### 1.6.4 readLine() 方法原理
+
+`readLine()` 方法的原理
+无论是读一行，获取读取多个字符。其实最终都是在硬盘上一个一个读取。
+所以最终使用的还是 `read()` 方法，一次读一个的方法。
+
+##### 1.6.5 自定义MyBufferedReader()
+
+(19/MyBufferedReaderDemoA)
+
+```java
+import java.io.*;
+
+class MyBufferedReader
+{
+	private FileReader r = null;
+	MyBufferedReader(FileReader r)
+	{
+		this.r = r;
+	}
+
+	public String myReadLine() throws IOException
+	{
+		//定义一个临时容器。原BufferReader封装的是字符数组。
+		//为了方便演示，定义一个StringBuilder容器。
+		//因为最终还是要将数据变成字符串。
+		StringBuilder sb = new StringBuilder();
+		int ch = 0;
+
+		while((ch = r.read()) != -1)
+		{
+			if(ch == '\r')
+			{
+				continue;
+			}
+			if(ch == '\n')
+			{
+				return sb.toString();
+			}
+			sb.append((char)ch);
+		}
+
+		if(sb.length() != 0)
+		{
+			return sb.toString();
+		}
+
+		return null;
+	}
+
+	public void myClose() throws IOException
+	{
+		r.close();
+	}
+}
+
+class MyBufferedReaderDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		FileReader fr = new FileReader("buf.txt");
+
+		MyBufferedReader mybufr = new MyBufferedReader(fr);
+
+		String line = null;
+
+		while((line = mybufr.myReadLine()) != null)
+		{
+			System.out.println(line);
+		}
+
+		mybufr.myClose();
+	}
+}
+```
+
+
+## 设计模式
+
+### 装饰设计模式
+
+由 `BufferedReader` 引出
+
+当想要 **对已有的对象进行功能增强** 时，
+可以定义类，将已有对象传入，基于已有的功能，并提供加强功能。
+那么自定义的该类成为装饰类。
+
+装饰类通常会通过构造方法接收被装饰的对象。
+并基于被装饰的对象的功能，提供更强的功能。
+
+(19/SuperPersonDemoA)
+
+```java
+class Person
+{
+	public void chifan()
+	{
+		System.out.println("吃饭");
+	}
+}
+
+class SuperPerson
+{
+	private Person p = null;
+
+	SuperPerson(Person p)
+	{
+		this.p = p;
+	}
+
+	public void superChifan()
+	{
+		System.out.println("开胃菜");
+		p.chifan();
+		System.out.println("饭后点心");
+	}
+}
+
+class SuperPersonDemoA
+{
+	public static void main(String[] args)
+	{
+		Person p = new Person();
+		// p.chifan();
+		SuperPerson sp = new SuperPerson(p);
+
+		sp.superChifan();
+	}
+}
+```
+
+装饰设计模式和继承的区别：
+
