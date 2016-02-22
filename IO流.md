@@ -2,12 +2,24 @@
 
 ## IO 流
 
-### 1. String
-
-#### 1.1 概述
+### 概述
 
 字节流 & 字符流
 输入流 & 输出流
+
+字符流：有缓冲区
+FileReader
+FileWriter
+
+BufferedReader
+BufferedWriter
+
+字节流：没有缓冲区
+InputStream
+OutputStream
+
+### 1. 字符流
+
 
 #### 1.2 FileWriter 简单示例
 
@@ -30,6 +42,7 @@ class FileWriterDemoA
 
 		//刷新流对象中的缓冲中的数据。
 		//将数据刷到目的地中。
+		//
 		fw.flush();
 
 		fw.write("\nbbbb");
@@ -556,10 +569,310 @@ class MyBufferedReaderDemoA
 }
 ```
 
+##### 1.6.6 LineNumberReader()
+
+继承自 `BufferedReader`
+
+`setLineNumber(int lineNumber)` 设置初始行号; 
+`getLineNumber()` 获取行号;
+
+(19/LineNumberReaderDemoA)
+
+```java
+import java.io.*;
+
+class LineNumberReaderDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		FileReader fr = new FileReader("BufferedWriterDemoA.java");
+
+		LineNumberReader lnr = new LineNumberReader(fr);
+
+		String line = null;
+
+		lnr.setLineNumber(100);
+		while((line = lnr.readLine()) != null)
+		{
+			System.out.println(lnr.getLineNumber() + " : " + line);
+		}
+
+		lnr.close();
+	}
+}
+```
+
+##### 1.6.7 MyLineNumberReader
+
+(19/MyLineNumberReaderDemoA)
+
+```java
+import java.io.*;
+
+class MyLineNumberReader
+{
+	private Reader r;
+
+	private int lineNumber;
+
+	MyLineNumberReader(Reader r)
+	{
+		this.r = r;
+	}
+
+	public String myReaderLine() throws IOException
+	{
+		lineNumber++;
+
+		StringBuilder sb = new StringBuilder();
+
+		int ch = 0;
+
+		while((ch = r.read()) != -1)
+		{
+			if(ch == '\r')
+			{
+				continue;
+			}
+			else if(ch == '\n')
+			{
+				return sb.toString();
+			}
+			else {
+				sb.append((char)ch);
+			}
+		}
+		if(sb.length() != 0)
+		{
+			return sb.toString();
+		}
+		return null;
+	}
+
+	public void setLineNumber(int number)
+	{
+		this.lineNumber = number;
+	}
+
+	public int getLineNumber()
+	{
+		return this.lineNumber;
+	}
+
+	public void myClose() throws IOException
+	{
+		r.close();
+	}
+}
+
+class MyLineNumberReaderDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		FileReader fr = new FileReader("BufferedWriterDemoA.java");
+
+		MyLineNumberReader mlnr = new MyLineNumberReader(fr);
+
+		String line = null;
+
+		mlnr.setLineNumber(100);
+
+		while((line = mlnr.myReaderLine()) != null)
+		{
+			System.out.println(mlnr.getLineNumber() + ":" + line);
+		}
+
+		mlnr.myClose();
+	}
+}
+```
+
+### 2. 字节流
+
+#### 2.1 FileInputStream、FileOutputStream
+
+`available()` 返回下一次对此输入流调用的方法可以不受阻塞地从此输入流读取（或跳过）的估计剩余字节数。
+
+(19/FileStreamDemoA)
+
+```java
+import java.io.*;
+
+class FileStreamDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		writeFile();
+		// readFileA();
+		// readFileB();
+		readFileC();
+	}
+
+	public static void readFileA() throws IOException
+	{
+		FileInputStream fis = new FileInputStream("stream.txt");
+
+		int b;
+
+		while((b = fis.read()) != -1)
+		{
+			System.out.println((char)b);
+		}
+		fis.close();
+	}
+
+	public static void readFileB() throws IOException
+	{
+		FileInputStream fis = new FileInputStream("stream.txt");
+
+		byte[] buf = new byte[1024];
+
+		int len;
+
+		while((len = fis.read(buf)) != -1)
+		{
+			System.out.println(new String(buf, 0, len));
+		}
+
+		fis.close();
+	}
+
+	public static void readFileC() throws IOException
+	{
+		FileInputStream fis = new FileInputStream("stream.txt");
+
+		byte[] buf = new byte[fis.available()];
+
+		fis.read(buf);
+
+		System.out.println(new String(buf));
+
+		fis.close();
+	}
+
+	public static void writeFile() throws IOException
+	{
+		FileOutputStream fos = new FileOutputStream("stream.txt");
+
+		fos.write("aabbccdd".getBytes());
+
+		fos.close();
+	}
+}
+```
+
+#### 2.2 复制图片
+
+(19/CopyPicDemoA)
+
+```java
+ import java.io.*;
+
+ class CopyPicDemoA
+ {
+ 	public static void main(String[] args)
+ 	{
+ 		FileInputStream fis = null;
+ 		FileOutputStream fos = null;
+
+ 		try
+ 		{
+	 		fis = new FileInputStream("1.png");
+	 		fos = new FileOutputStream("2.png");
+
+	 		byte[] buf = new byte[1024];
+	 		int len;
+
+	 		while((len = fis.read(buf)) != -1)
+	 		{
+	 			fos.write(buf);
+	 		}
+ 		}
+ 		catch(IOException e)
+ 		{
+ 			throw new RuntimeException("CopyFail");
+ 		}
+ 		finally
+ 		{
+ 			try
+ 			{
+ 				if(fis != null)
+ 				{
+ 					fis.close();
+ 				}
+ 			}
+ 			catch(IOException e)
+ 			{
+ 				System.out.println("Input close failed!");
+ 			}
+
+ 			try
+ 			{
+ 				if(fos != null)
+ 				{
+ 					fos.close();
+ 				}
+ 			}
+ 			catch(IOException e)
+ 			{
+ 				System.out.println("Output close failed!");
+ 			}
+ 		}
+ 	}
+ }
+```
+
+#### 2.3 复制MP3 Buffered
+
+字节流缓冲区
+
+(19/CopyMp3DemoA)
+
+```java
+import java.io.*;
+
+class CopyMp3DemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		BufferedInputStream bufis = new BufferedInputStream(new FileInputStream("1.mp3"));
+		BufferedOutputStream bufos = new BufferedOutputStream(new FileOutputStream("2.mp3"));
+
+		int n;
+
+		while((n = bufis.read()) != -1)
+		{
+			bufos.write(n);
+		}
+
+		bufis.close();
+		bufos.close();
+	}
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 设计模式
 
 ### 装饰设计模式
+
+#### 装饰设计模式示例
 
 由 `BufferedReader` 引出
 
@@ -611,5 +924,51 @@ class SuperPersonDemoA
 }
 ```
 
-装饰设计模式和继承的区别：
+#### 装饰设计模式和继承的区别：
+
+MyReader //专门用于读取数据的类
+	|--MyTextReader
+		|--MyBufferTextReader
+	|--MyMediaReader
+		|--MyBufferMediaReader
+	|--MyDataReader
+		|--MyBufferDataReader
+
+```java
+//伪代码
+class MyBufferReader()
+{
+	MyBufferReader(MyTextReader text)
+	{}
+	MyBufferReader(MyMediaReader media)
+	{
+
+	}
+}
+```
+
+上面这个类，拓展性很差。
+找到其参数的共同类型。通过多态的形式。可以提高扩展性。
+
+MyReader //专门用于读取数据的类。
+	|--MyTextReader 
+	|--MyMediaReader
+	|--MyDataReader
+
+```java
+class MyBufferReader extends MyReader
+{
+	private MyReader r;
+	MyBufferReader(MyReader r)
+	{
+		this.r = r;
+	}
+}
+```
+
+装饰模式比继承模式要灵活。避免了继承体系臃肿。
+而且降低了类与类之间的关系。
+
+装饰类因为增强已有对象，具备的功能和已有的是相同的，只不过提供了更强功能。
+所以装饰类和被装饰通常都是属于一个体系中的。
 
