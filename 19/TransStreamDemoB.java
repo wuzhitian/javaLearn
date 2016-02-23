@@ -22,7 +22,7 @@ class TransStreamDemoB
 			{
 				break;
 			}
-
+ 
 			bufw.write(line.toUpperCase());
 			bufw.newLine();
 			bufw.flush();

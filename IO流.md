@@ -1153,6 +1153,40 @@ OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream("demo.txt",
 BufferedWriter bufw = new BufferedWriter(osw);
 ```
 
+所以，转换流是字符字节之间的桥梁。通常，涉及到字符编码转换时，需要用到转换流。
+
+(19/TransStreamDemoC)
+
+```java
+import java.io.*;
+
+class TransStreamDemoC
+{
+	public static void main(String[] args) throws IOException
+	{
+		BufferedReader bufr = new BufferedReader(new InputStreamReader(System.in));
+
+		BufferedWriter bufw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("code_demo.txt"), "UTF-8"));
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			if("over".equals(line.toLowerCase()))
+			{
+				break;
+			}
+			bufw.write(line.toUpperCase());
+			bufw.newLine();
+			bufw.flush();
+		}
+
+		bufr.close();
+		bufw.close();
+	}
+}
+```
+
 
 ****************
 
@@ -1160,6 +1194,115 @@ BufferedWriter bufw = new BufferedWriter(osw);
 
 
 ---------------------------------------
+
+
+### 4. 改变标准输入输出设备
+
+`System.setIn()` 和 `System.setOut()`
+
+(19/TransStreamDemoD)
+
+```java
+import java.io.*;
+
+class TransStreamDemoD
+{
+	public static void main(String[] args) throws IOException
+	{
+		System.setIn(new FileInputStream("BufferedWriterDemoA.java"));
+		System.setOut(new PrintStream("setIn&setOut.txt"));
+
+		LineNumberReader lnfr = new LineNumberReader(new InputStreamReader(System.in));
+
+		BufferedWriter bufw = new BufferedWriter(new OutputStreamWriter(System.out));
+
+		String line = null;
+
+		while((line = lnfr.readLine()) != null)
+		{
+			if("over".equals(line.toLowerCase()))
+			{
+				break;
+			}
+			bufw.write(lnfr.getLineNumber() + " : " + line.toUpperCase());
+			bufw.newLine();
+			bufw.flush();
+		}
+
+		lnfr.close();
+		bufw.close();
+	}
+}
+```
+
+### 5. 异常的日志信息生成
+
+(19/ExceptionIofoDemoA)
+
+```java
+import java.io.*;
+import java.util.*;
+import java.text.*;
+
+class ExceptionIofoDemoA
+{
+	public static void main(String[] args)
+	{
+		try
+		{
+			int[] arr = new int[3];
+			System.out.println(arr[3]);
+		}
+		catch(Exception e)
+		{
+			PrintStream ps = null;
+			try
+			{
+				ps = new PrintStream("ExceptionInfo.txt");
+				Date d = new Date();
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+				String s = sdf.format(d);
+
+				ps.println(d.toString());
+				System.setOut(ps);
+			}
+			catch(IOException ex)
+			{
+				throw new RuntimeException("Create ExceptionInfo.txt failed");
+			}
+			e.printStackTrace(System.out);
+		}
+	}
+}
+```
+
+### 6. 系统信息
+
+`Properties props = System.getProperties()`
+`props.list(System.out)`
+
+(19/SystemInfoDemoA)
+
+```java
+import java.util.*;
+import java.io.*;
+
+class SystemInfoDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		Properties props = System.getProperties();
+
+		props.list(new PrintStream("SystemInfo.txt"));
+	}
+}
+```
+
+### 7.
+
+
+
+
 
 
 
