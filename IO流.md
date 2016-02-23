@@ -8,15 +8,21 @@
 输入流 & 输出流
 
 字符流：有缓冲区
-FileReader
-FileWriter
+`FileReader`
+`FileWriter`
 
-BufferedReader
-BufferedWriter
+`BufferedReader`
+`BufferedWriter`
 
 字节流：没有缓冲区
-InputStream
-OutputStream
+`InputStream`
+`OutputStream`
+
+`BufferedInputStream`
+`BufferedOutputStream`
+
+字符流 -> 字节流 `OutputStreamWriter`
+字节流 -> 字符流 `InputStreamReader`
 
 ### 1. 字符流
 
@@ -850,6 +856,310 @@ class CopyMp3DemoA
 	}
 }
 ```
+
+#### 2.4 MyBufferedInputStream
+
+### 3. 读取键盘录入
+
+#### 3.1 读取键盘录入示例
+
+`public static final InputStream in`
+
+(19/ReadInDemoA)
+
+```java
+ import java.io.*;
+
+ class ReadInDemoA
+ {
+ 	public static void main(String[] args) throws IOException
+ 	{
+ 		InputStream in = System.in;
+
+ 		int ch = 0;
+
+ 		while((ch = in.read()) != -1)
+ 		{
+ 			System.out.println((char)ch + " : " + ch);
+ 		}
+
+ 		in.close();
+ 	}
+ }
+```
+
+(19/ReadInDemoB)
+
+```java
+import java.io.*;
+
+class ReadInDemoB
+{
+	public static void main(String[] args) throws IOException
+	{
+		InputStream in = System.in;
+
+		StringBuilder sb = new StringBuilder();
+
+		while(true)
+		{
+			int ch = in.read();
+			if(ch == '\r')
+			{
+				continue;
+			}
+			else if (ch == '\n')
+			{
+				String s = sb.toString().toLowerCase();
+				if("over".equals(s))
+				{
+					break;
+				}
+				else
+				{
+					System.out.println(sb.toString().toUpperCase());
+					sb.delete(0, sb.length());
+				}
+			}
+			else
+			{
+				sb.append((char)ch);
+			}
+		}
+
+		in.close();
+	}
+}
+```
+
+#### 3.2 读取转换流 InputStreamReader
+
+InputStreamReader 是字节流通向字符流的桥梁：它使用指定的 charset 读取字节并将其解码为字符。
+
+(19/TransStreamDemoA)
+
+```java
+import java.io.*;
+
+class TransStreamDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		//获取键盘录入对象
+		InputStream in = System.in;
+	
+		//将字节流对象转成字符流对象，使用转换流。InputStreamReader
+		InputStreamReader isr = new InputStreamReader(in);
+
+		//为了提高效率，将字符串进行缓冲区技术高效操作。使用BufferedReader
+		BufferedReader bufr = new BufferedReader(isr);
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			if("over".equals(line.toLowerCase()))
+			{
+				break;
+			}
+			System.out.println(line.toUpperCase());
+		}
+
+		bufr.close();
+	}
+}
+```
+
+#### 3.3 写入转换流 OutputStreamWriter
+
+OutputStreamWriter 是字符流通向字节流的桥梁：可使用指定的 charset 将要写入流中的字符编码成字节。
+
+(19/TransStreamDemoB)
+
+```java
+import java.io.*;
+
+class TransStreamDemoB
+{
+	public static void main(String[] args) throws IOException
+	{
+		// InputStream in = System.in;
+		// InputStreamReader isr = new InputStreamReader(in);
+		// BufferedReader bufr = new BufferedReader(isr);
+		BufferedReader bufr = new BufferedReader(new InputStreamReader(System.in));
+
+		// OutputStream out = System.out;
+		// OutputStreamWriter osw = new OutputStreamWriter(out);
+		// BufferedWriter bufw = new BufferedWriter(osw);
+		BufferedWriter bufw = new BufferedWriter(new OutputStreamWriter(System.out));
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			if("over".equals(line.toLowerCase()))
+			{
+				break;
+			}
+
+			bufw.write(line.toUpperCase());
+			bufw.newLine();
+			bufw.flush();
+		}
+
+		bufr.close();
+
+	}
+}
+```
+
+#### 3.4 流操作规则
+
+##### 3.4.1 基本规律
+
+1. 需求：显示键盘录入
+源：键盘录入。
+目的：控制台。
+
+2. 需求：想把键盘录入的数据存储到一个文件中。
+源：键盘。
+目的：文件
+
+3. 需求：想要将一个文件的数据打印在控制台上。
+源：文件
+目的：控制台
+
+通过三个明确来完成。
+
+	1. 明确源和目的。
+		* 源：输入流。(`InputStream` `Reader`)
+		* 目的：输出流。(`OutputStream` `Writer`)
+	2. 操作的数据是否是纯文本。
+		* 是：字符流。 (`Reader`, `Writer`)
+		* 不是：字节流。(`InputStream`, `OutputStream`)
+	3. 当体系明确后，再明确要使用那个具体的对象。
+	 	* 通过设备来区分：
+	 	* 源设备：内存，硬盘，键盘
+	 	* 目的设备：内存，硬盘，控制台
+
+---------------------------------------
+
+需求：将一个文本文件中的数据存储到另一个文件中。复制文件。
+分析：
+
+	源： 因为是源，所以使用输入流。(`InputStream` 或 `Reader`)
+	文本文件：是，所以使用 `Reader`。
+	设备： 硬盘。确定使用 `FileReader`。
+	是否提高效率：是。使用 `BufferedReader`
+
+	目的：使用输出流。(`OutputStream` 或 `Writer`)
+	文本文件：是，所以使用 `Writer`。
+	设备： 硬盘。确定使用 `FileWriter`。
+	是否提高效率：是。使用 `BufferedWriter`。
+
+```java
+FileReader fr = new FileReader("demo.txt");
+BufferedReader bufr = new BufferedReader(fr);
+
+FileWriter fw = new FileWriter("demo_copy.txt");
+BufferedWriter bufw = new BufferedWriter(fw);
+
+String line = null;
+
+while((line = bufr.readLine()) != null)
+{
+	bufw.write(line);
+}
+
+bufw.close();
+bufr.close();
+
+```
+
+---------------------------------------
+
+练习：复制图片文件，提高效率
+
+```java
+//伪代码
+FileInputStream fis = new FileInputStream("demo.jpg");
+BufferedInputStream bufis = new BufferedInputStream(fis);
+
+FileOutputStream fos = new FileOutputStream("demo_copy.jpg");
+BufferedOutputStream bufos = new BuferedOutputStream(fos);
+
+byte[] by = new byte[1024];
+int len;
+
+while((len = bufis.read(by)) != -1)
+{
+	bufos.write(by, 0, len);
+}
+
+bufis.close();
+bufos.close();
+
+```
+
+---------------------------------------
+
+##### 3.4.2 基本规律-2（指定编码表）
+
+---------------------------------------
+
+需求：将键盘录入的数据保存到一个文件中。
+
+这个需求中有源和目的都存在。
+
+**源：** `InputStream` `Reader`
+是不是纯文本？是！`Reader` (因为为了操作键盘的文本数据方便，所以一般都将键盘输入的 **字节流** 转换成 **字符流** 然后按照字符串操作是最方便的。)
+
+设备：键盘。对应的对象是 `System.in`。
+所以既然明确了 `Reader`，那么就将 `System.in` 转换成 `Reader`。
+用了 `Reader` 体系中的转换流，`InputStreamReader`
+
+```java
+InputStreamReader isr = new InputStreamReader(System.in);
+//提高效率
+BufferedReader bufr = new BufferedReader(isr);
+```
+
+**目的：** `OutputStream` `Writer`
+是不是纯文本？是！`Writer`
+
+设备：硬盘。用 `FileWriter`
+
+```java
+FileWriter fw = new FileWriter("recordKeyboard.txt");
+//提高效率
+BufferedWriter bufw = new BufferedWriter(fw);
+```
+
+****************
+
+扩展：指定保存录入数据文件的编码表。
+
+**目的：** `OutputStream` `Writer`
+是否是存文本？是！`Writer`。
+设备：硬盘。使用 `FileWriter`。
+
+但是 `FileWriter` 是使用jdk默认的编码表。而只有转换流才可以指定编码表。
+所以要使用 `OutputStreamWriter`。
+而该转换流对象要接收一个字节输入流。而且还可以操作的文件的字节输出流。`FileOutputStream`。
+
+```java
+OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream("demo.txt", "urf-8"));
+//提高效率
+BufferedWriter bufw = new BufferedWriter(osw);
+```
+
+
+****************
+
+
+
+
+---------------------------------------
 
 
 
