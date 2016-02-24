@@ -1298,13 +1298,330 @@ class SystemInfoDemoA
 }
 ```
 
-### 7.
+-------------------------------------------
 
 
+## File对象
+
+### 概述
+
+(20/FileDemoA)
+
+```java
+import java.io.*;
+
+class FileDemoA
+{
+	public static void main(String[] args)
+	{
+		//将a.txt封装成file对象。
+		//可以将已有的和未出现的文件或者文件夹封装成对象。
+		File f1 = new File("a.txt");
+		
+
+		File f2 = new File("c://abc", "abc.txt");
+		File f3 = new File("d://abc");
+
+		String d = "e://";
+		File f4 = new File(d, "d.txt");
+		File f5 = new File("c:"+File.separator+"abc"+File.separator+"abc.txt");
+
+		sop(f1);
+		sop(f2);
+		sop(f3);
+		sop(f4);
+		sop(f5);
+	}
+
+	public static void sop(Object obj)
+	{
+		System.out.println(obj);
+	}
+}
+```
+
+### 1 File 对象功能
+
+1. 创建
+	`boolean createNewFile()`;
+	`boolean mkdir()`;
+	`boolean mkdirs()`;
+
+2. 删除
+	`boolean delete()`; 
+	`void deleteOnExit()`;
+
+3. 判断
+	`boolean canExecute()`;
+	`boolean exists()`;
+	`boolean isFile()`;
+	`boolean isDirectory()`;
+	`boolean isHidden()`;
+	`boolean isAbsolute()`;
+
+4. 获取文件信息
+	`String getName()`;
+	`String getPath()`;
+	`String getParent()`;
+	`String getAbsolutePath()`;
+	`File getAbsoluteFile()`;
+	`long lastModified()`;
+	`long length()`;
+
+5. 修改
+	`boolean renameTo(File f)`
+
+#### 1.1 创建和删除
+
+** 创建 **
+`boolean createNewFile()`：在指定位置创建文件，如果该文件已经存在，则不创建，返回false。和输出流不一样，输出流对象一创建文件。而且文件已经存在，会覆盖。
+
+`boolean mkdir()`：创建此抽象路径名指定的目录。
+
+`boolean mkdirs()`：创建多级文件夹目录。
+
+** 删除 **
+`boolean delete()`： 删除失败会返回 `false`。
+`void deleteOnExit()`：在虚拟机终止时，请求删除此抽象路径名表示的文件或目录。
+
+(20/FileCreateDeleteDemoA)
+
+```java
+import java.io.*;
+
+class FileCreateDeleteDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File f1 = new File("a.txt");
+		sop("create: " + f1.createNewFile());
+
+		sop("delete: " + f1.delete());
+
+		f1.deleteOnExit();
+
+		File f2 = new File("aa\\bb\\cc");
+		File f3 = new File("aa");
+		sop("f2.mkdir:" + f2.mkdir());
+		sop("f2.mkdirs:" + f2.mkdirs());
+		sop("f3.mkdir:" + f3.mkdir());
+
+		f2.delete();
+		f3.deleteOnExit();
+
+		//这里需要注意的是，File对象的delete是删除被实例化的具体文件或文件夹。
+		//如 File f5 = new File("aaa\\bbb\\ccc\\ddd\\eee");
+		//f5.mkdirs();
+		//f5.delete();	//这时删除的仅仅是末尾的eee文件夹
+	}
+
+	public static void sop(Object obj)
+	{
+		System.out.println(obj);
+	}
+}
+```
+
+#### 1.2 判断
+
+* `boolean canExecute()`;
+* `boolean exists()`;
+* `boolean isFile()`;
+* `boolean isDirectory()`;
+* `boolean isHidden()`;
+* `boolean isAbsolute()`;
+
+**注意：**在判断文件对象是否是文件或者目录时，必须要先判断奶文件对象封装的内容是否存在。通过 `exists` 判断。
+
+(20/FileJudgeDemoA)
+
+```java
+import java.io.*;
+
+class FileJudgeDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File f1 = new File("aa.txt");
+		sop(f1.isFile());
+		sop(f1.exists());
+		sop(f1.createNewFile());
+		sop(f1.isFile());
+		sop(f1.isDirectory());
+		sop(f1.isAbsolute());
+
+		File f2 = new File("aaa//bbb//ccc");
+
+		sop(f2.exists());
+		sop(f2.isFile());
+		sop(f2.mkdirs());
+		sop(f2.isFile());
+		sop(f2.isDirectory());
+	}
+	public static void sop(Object obj)
+	{
+		System.out.println(obj);
+	}
+}
+```
+
+#### 1.3 获取文件信息
+
+* `String getName()`;
+* `String getPath()`;
+	实例化`File`对象时，传参的是绝对路径就返回绝对路径，相对路径就返回相对路径。
+* `String getParent()`;
+	该方法返回的是绝对路径的父目录。如果获取的是相对路径，返回 `null`。
+	如果相对路径中有上一层目录（如 `"aa\\bb.txt"`），那么该目录就是返回结果，即（`"aa"`）；
+* `String getAbsolutePath()`;
+* `File getAbsoluteFile()`;
+* `long lastModified()`;
+* `long length()`;
+	此抽象路径名表示的文件的长度(即文件大小)，以字节为单位；如果文件不存在，则返回 0L。
+
+(20/FileGetInfoDemoA)
+
+```java
+import java.io.*;
+
+class FileGetInfoDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File f1 = new File("D:\\test.txt");
+		sop("f1 getPath:"+ f1.getPath());    //f1 getPath:D:\test.txt
+		sop("f1 getName:"+ f1.getName());    //f1 getName:test.txt
+		sop("f1 getParent:"+ f1.getParent());    //f1 getParent:D:\
+		sop("f1 getAbsolutePath:"+ f1.getAbsolutePath());    //f1 getAbsolutePath:D:\test.txt
+		sop("f1 getAbsoluteFile:"+ f1.getAbsoluteFile());    //f1 getAbsoluteFile:D:\test.txt
+		sop("f1 lastModified:"+ f1.lastModified());    //f1 lastModified:0
+		sop("f1 length:"+ f1.length());    //f1 length:0
 
 
+		File f2 = new File("test2.txt");
+
+		f2.createNewFile();
+
+		sop("f2 getPath:"+ f2.getPath());	//f2 getPath:test2.txt
+		sop("f2 getName:"+ f2.getName());	//f2 getName:test2.txt
+		sop("f2 getParent:"+ f2.getParent());	//f2 getParent:null
+		sop("f2 getAbsolutePath:"+ f2.getAbsolutePath());	//f2 getAbsolutePath:D:\learnSpace\javaLearn\20\test2.txt
+		sop("f2 getAbsoluteFile:"+ f2.getAbsoluteFile());	//f2 getAbsoluteFile:D:\learnSpace\javaLearn\20\test2.txt
+		sop("f2 lastModified:"+ f2.lastModified());	//f2 lastModified:0
+		sop("f2 length:"+ f2.length());	//f2 length:0
+
+		File f3 = new File("bb\\test3.txt");
+
+		sop("f3 getPath:"+ f3.getPath());		//f3 getPath:bb\test3.txt
+		sop("f3 getName:"+ f3.getName());		//f3 getName:test3.txt
+		sop("f3 getParent:"+ f3.getParent());		//f3 getParent:bb
+		sop("f3 getAbsolutePath:"+ f3.getAbsolutePath());		//f3 getAbsolutePath:D:\learnSpace\javaLearn\20\bb\test3.txt
+		sop("f3 getAbsoluteFile:"+ f3.getAbsoluteFile());		//f3 getAbsoluteFile:D:\learnSpace\javaLearn\20\bb\test3.txt
+		sop("f3 lastModified:"+ f3.lastModified());		//f3 lastModified:0
+		sop("f3 length:"+ f3.length());		//f3 length:0
 
 
+	}
+	public static void sop(Object obj)
+	{
+		System.out.println(obj);
+	}
+}
+```
+
+#### 1.4 修改
+	
+* `boolean renameTo(File f)`
+
+(20/FileRenameToDemoA)
+
+```java
+import java.io.*;
+
+class FileRenameToDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File f1 = new File("f1.txt");
+		f1.createNewFile();
+		File f2 = new File("f2.txt");
+
+		f1.renameTo(f2);
+	}
+}
+```
+
+### 2. 文件列表
+
+#### 2.1 `list()` `listRoots()`
+
+* `String[] list()`;
+	调用 `list` 方法的 `file` 对象必须是封装了一个已存在的目录。
+	如果此抽象路径名不表示一个目录，或者发生 I/O 错误，则返回 null。
+
+* `File[] listRoot()`;
+	列出可用的文件系统根。 (盘符分区)
+
+(20/FileListDemoA)
+
+```java
+import java.io.*;
+
+class FileListDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		// listRoot();
+		list();
+	}
+
+	public static void list() throws IOException
+	{
+		File file = new File("D:\\");
+
+		String[] names = file.list();
+
+		for(String name : names)
+		{
+			System.out.println(name);
+		}
+
+
+		// File file2 = new File("AA");
+		// String[] names2 = file2.list();
+		// for(String name2 : names2)		//java.lang.NullPointerException
+		// {
+		// 	System.out.println(name2);
+		// }
+
+		File file3 = new File("AA");
+		file3.mkdirs();
+		String[] names3 = file3.list();
+		for(String name3 : names3)
+		{
+			System.out.println("name3: " + name3);
+		}
+
+		// File file4 = new File("AA.txt");
+		// file4.createNewFile();
+		// String[] names4 = file4.list();
+		// for(String name4 : names4)	//java.lang.NullPointerException
+		// {
+		// 	System.out.println("name4: " + name4);
+		// }
+	}
+
+	public static void listRoot()
+	{
+		File[] files = File.listRoots();
+
+		for(File file : files)
+		{
+			System.out.println(file);
+		}
+	}
+}
+```
 
 
 
@@ -1379,13 +1696,13 @@ class SuperPersonDemoA
 
 #### 装饰设计模式和继承的区别：
 
-MyReader //专门用于读取数据的类
-	|--MyTextReader
-		|--MyBufferTextReader
-	|--MyMediaReader
-		|--MyBufferMediaReader
-	|--MyDataReader
-		|--MyBufferDataReader
+	MyReader //专门用于读取数据的类
+		|--MyTextReader
+	        |--MyBufferTextReader
+		|--MyMediaReader
+			|--MyBufferMediaReader
+		|--MyDataReader
+			|--MyBufferDataReader
 
 ```java
 //伪代码
