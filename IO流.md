@@ -1623,6 +1623,201 @@ class FileListDemoA
 }
 ```
 
+#### 2.2 `list(FilenameFilter file)`
+
+(20/FileListDemoB)
+
+```java
+import java.io.*;
+
+class FileListDemoB
+{
+	public static void main(String[] args) throws IOException
+	{
+		File temp = new File("temp.txt");
+		File absPath = temp.getAbsoluteFile();
+		temp.deleteOnExit();
+
+
+		File parentFile = absPath.getParentFile();
+		String[] javaNames = parentFile.list(new FilenameFilter()
+		{
+			public boolean accept(File dir, String name)
+			{
+				return name.endsWith("class");
+			}
+		});
+
+		for(String name : javaNames)
+		{
+			System.out.println(name);
+		}
+
+	}
+}
+```
+
+#### 2.3 列出某文件夹下所有内容（递归）
+
+(20/FileListDemoC)
+
+```java
+import java.io.*;
+
+class FileListDemoC
+{
+	public static void main(String[] args)
+	{
+		File file = new File("D:\\learnSpace\\javaLearn");
+
+		showDir(file);
+	}
+
+	public static void showDir(File dir)
+	{
+		System.out.println("Dir::  " + dir);
+		File[] f = dir.listFiles();
+		for(int x = 0; x < f.length; x++)
+		{
+			if(f[x].isDirectory())
+			{
+				showDir(f[x]);
+			}
+			else
+			{
+				System.out.println(f[x]);
+			}
+		}
+	}
+}
+```
+
+##### 2.3.1 关于递归
+
+递归要注意：
+1，限定条件。
+2，要注意递归的次数，尽量避免内存溢出。
+
+(20/RecursionDemoA)
+
+```java
+class RecursionDemoA
+{
+	public static void main(String[] args)
+	{
+		toBin(9);
+		System.out.println(getSum(50));
+	}
+	public static void toBin(int num)
+	{
+		if(num > 0)
+		{
+			System.out.println(num%2);
+			toBin(num/2);
+		}
+	}
+
+	public static int getSum(int num)
+	{
+		if(num == 1)
+		{
+			return num;
+		}
+		else
+		{
+			return num + getSum(num - 1);
+		}
+	}
+}
+```
+
+##### 2.3.2 列出文件夹下所有内容（带层次结构）
+
+(20/FileListDemoD)
+
+```java
+import java.io.*;
+
+class FileListDemoD
+{
+	public static void main(String[] args)
+	{
+		File f = new File("D:\\learnSpace\\javaLearn");
+		showDir(f, 0);
+	}
+	public static void showDir(File dir, int level)
+	{
+		System.out.println(getLevel(level) + dir.getName());
+		level++;
+		File[] files = dir.listFiles();
+
+		for(int x = 0; x < files.length; x++)
+		{
+			if(files[x].isDirectory())
+			{
+				showDir(files[x], level);
+			}
+			else
+			{
+				System.out.println(getLevel(level) + files[x].getName());
+			}
+		}
+
+	}
+	public static String getLevel(int level)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("|----");
+		for(int x = 0; x < level; x++)
+		{
+			sb.insert(0, "    ");
+		}
+		return sb.toString();
+	}
+}
+```
+
+#### 2.4 删除带内容的目录
+
+删除原理：
+在 windows 中，删除内容是从里往外删的。
+既然是从里往外删除。就需要用到递归。
+
+(20/RemoveDirDemoA)
+
+```java
+import java.io.*;
+
+class RemoveDirDemoA
+{
+	public static void main(String[] args)
+	{
+		File file = new File("D:\\learnSpace\\javaLearn222");
+		removeDir(file);
+	}
+
+	public static void removeDir(File dir)
+	{
+		File[] files = dir.listFiles();
+
+		for(int x = 0; x < files.length; x++)
+		{
+			if(!files[x].isHidden() && files[x].isDirectory())
+			{
+				removeDir(files[x]);
+			}
+			else
+			{
+				System.out.println(files[x].getName() + " : " + files[x].delete());
+			}
+		}
+		dir.delete();
+	}
+}
+```
+
+#### 2.5 创建文件列表
+
 
 
 
