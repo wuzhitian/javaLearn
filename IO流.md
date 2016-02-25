@@ -1818,6 +1818,373 @@ class RemoveDirDemoA
 
 #### 2.5 创建文件列表
 
+```java
+import java.io.*;
+import java.util.*;
+
+class JavaFileListDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File file = new File("D:\\learnSpace\\Java");
+		List<File> list = new ArrayList<File>();
+
+		getFileList(file, list);
+
+		System.out.println(list.size());
+
+		File javaFileList = new File("javaFileList.txt");
+		writeToFile(list, javaFileList);
+
+	}
+
+	public static void getFileList(File dir, List<File> list)
+	{
+		File[] files = dir.listFiles();
+		System.out.println(dir);
+		for(File file : files)
+		{
+			if(file.isDirectory())
+			{
+				getFileList(file, list);
+			}
+			else
+			{
+				if(file.getName().endsWith(".java"))
+				{
+					list.add(file);
+				}
+			}
+		}
+	}
+
+	public static void writeToFile(List<File> list, File file) throws IOException
+	{
+		BufferedWriter bufw = null;
+
+		try
+		{
+			bufw = new BufferedWriter(new FileWriter(file));
+			for(File f : list)
+			{
+				bufw.write(f.getAbsolutePath());
+				bufw.newLine();
+				bufw.flush();
+			}
+		}
+		catch(IOException e)
+		{
+			throw e;
+		}
+		finally
+		{
+			try
+			{
+				if(bufw != null)
+				{
+					bufw.close();
+				}
+			}
+			catch(IOException e)
+			{
+				throw e;
+			}
+		}
+	}
+}
+```
+
+## Properties
+
+常用方法：
+
+* `void setProperty(String key, String value)`;
+* `Set<String> stringPropertyNames()`;
+* 
+* `void load(InputStream in)`;
+* `void load(Reader reader)`;
+* 
+* `void store(OutputStream out, String comments)`;
+* `void store(Writer writer, String comments)`;
+
+
+### 1.1 Properties 简述
+
+`Properties` 是 `hashtable` 的子类。
+也就是说它具备 `map` 集合的特点。而且它里面存储的键值对都是字符串。
+是集合中和IO技术相结合的集合容器。
+该对象特点：可以用于键值对形式的配置文件。
+加载数据是，需要数据有固定格式：`键=值`;
+
+### 1.2 Properties 存取
+
+(20/PropertiesDemoA)
+
+```java
+import java.io.*;
+import java.util.*;
+
+class PropertiesDemoA
+{
+	public static void main(String[] args)
+	{
+		Properties props = new Properties();
+		props.setProperty("zhangsan", "20");
+		props.setProperty("lisi", "30");
+
+		Set<String> names = props.stringPropertyNames();
+		for(String name : names)
+		{
+			System.out.println(name + " :: " + props.getProperty(name));
+		}
+	}
+}
+```
+
+### 1.3 Properties 存取配置文件
+
+`void setProperty(String key, String value)`;
+`Set<String> stringPropertyNames()`;
+
+`void load(InputStream in)`;
+`void load(Reader reader)`;
+
+`void store(OutputStream out, String comments)`;
+`void store(Writer writer, String comments)`;
+
+(20/PropertiesDemoB)
+
+```java
+import java.io.*;
+import java.util.*;
+
+class PropertiesDemoB
+{
+	public static void main(String[] args) throws IOException
+	{
+		// method_1();
+		loadDemo();
+	}
+
+	public static void method_1() throws IOException
+	{
+		Properties props = new Properties();
+
+		BufferedReader bufr = new BufferedReader(new FileReader("info.txt"));
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			String[] arr = line.split("=");
+			props.setProperty(arr[0], arr[1]);
+			// System.out.println(line);
+		}
+
+		Set<String> names = props.stringPropertyNames();
+
+		for(String name : names)
+		{
+			System.out.println(name + " = " + props.getProperty(name));
+		}
+	}
+
+	public static void loadDemo() throws IOException
+	{
+		Properties props = new Properties();
+		FileReader fr = new FileReader("info.txt");
+		FileInputStream fis = new FileInputStream("info.txt");
+		// props.load(new FileReader("info.txt"));
+		props.load(fis);
+
+		System.out.println(props);
+
+		props.setProperty("zhangsan", "zhangsan");
+
+		FileWriter fw = new FileWriter("info.txt");
+		// FileOutputStream fos = new FileOutputStream("info.txt");
+
+		props.store(fw, "hh");
+
+
+		fw.close();
+		fr.close();
+	}
+}
+```
+
+### 1.4 Properties 练习
+
+需求：记录程序运行次数，提示注册。
+
+(20/PropertiesExerciseDemoA)
+
+```java
+import java.io.*;
+import java.util.*;
+
+class PropertiesExerciseDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File file = new File("count.ini");
+		if(!file.exists())
+		{
+			file.createNewFile();
+		}
+		FileReader fr = new FileReader(file);
+
+		Properties props = new Properties();
+
+		props.load(fr);
+
+		
+		int count = 0;
+		String value = props.getProperty("time");
+
+		if(value != null)
+		{
+			count = Integer.parseInt(value);
+			if(count >= 5)
+			{
+				System.out.println("Time out!!!");
+				return;
+			}
+		}
+		count++;
+		props.setProperty("time", count+"");
+
+		FileWriter fw = new FileWriter(file);
+
+		props.store(fw, "");
+
+		fr.close();
+		fw.close();
+
+		System.out.println("Welcome!");
+	}
+}
+```
+
+## PrintWriter & PrintStream
+
+字节打印流：
+PrintStream
+构造函数可以接收的参数类型
+1. `file` 对象。`File`
+2. 字符串路径。`String`
+3. 字节输出流。`OutputStream`
+
+
+字符打印流：
+PrintWriter
+构造函数可以接收的参数类型
+1. `file` 对象。`File`
+2. 字符串路径。`String`
+3. 字节输出流。`OutputStream`
+4. 字符输出流。`Writer`
+
+(20/PrintWriterDemoA)
+
+```java
+import java.io.*;
+
+class PrintWriterDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		// method_1();
+		// method_2();
+		method_3();
+	}
+
+	public static void method_1() throws IOException
+	{
+		BufferedReader bufr = new BufferedReader(new InputStreamReader(System.in));
+
+		PrintWriter pw = new PrintWriter(System.out);
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			if("over".equals(line))
+			{
+				break;
+			}
+			pw.println(line.toUpperCase());
+			pw.flush();
+		}
+
+		bufr.close();
+		pw.close();
+	}
+
+	public static void method_2() throws IOException
+	{
+		BufferedReader bufr = new BufferedReader(new InputStreamReader(System.in));
+
+		PrintStream pw = new PrintStream(new File("Print.txt"));
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			if("over".equals(line))
+			{
+				break;
+			}
+			pw.println(line.toUpperCase());
+			pw.flush();
+		}
+
+		bufr.close();
+		pw.close();
+	}
+
+	public static void method_3() throws IOException
+	{
+		BufferedReader bufr = new BufferedReader(new InputStreamReader(System.in));
+
+		PrintStream pw = new PrintStream(new FileOutputStream("Print.txt"), true);
+
+		String line = null;
+
+		while((line = bufr.readLine()) != null)
+		{
+			if("over".equals(line))
+			{
+				break;
+			}
+			pw.println(line.toUpperCase());
+		}
+
+		bufr.close();
+		pw.close();
+	}
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1915,10 +2282,10 @@ class MyBufferReader()
 上面这个类，拓展性很差。
 找到其参数的共同类型。通过多态的形式。可以提高扩展性。
 
-MyReader //专门用于读取数据的类。
-	|--MyTextReader 
-	|--MyMediaReader
-	|--MyDataReader
+	MyReader //专门用于读取数据的类。
+		|--MyTextReader 
+		|--MyMediaReader
+		|--MyDataReader
 
 ```java
 class MyBufferReader extends MyReader
