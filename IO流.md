@@ -1,6 +1,8 @@
 [TOC]
 
-## IO 流
+# IO 流
+
+## IO 流基础
 
 ### 概述
 
@@ -2066,18 +2068,16 @@ class PropertiesExerciseDemoA
 }
 ```
 
-## PrintWriter & PrintStream
+## 打印流 PrintWriter & PrintStream
 
-字节打印流：
-PrintStream
+字节打印流：`PrintStream`
 构造函数可以接收的参数类型
 1. `file` 对象。`File`
 2. 字符串路径。`String`
 3. 字节输出流。`OutputStream`
 
 
-字符打印流：
-PrintWriter
+字符打印流：`PrintWriter`
 构造函数可以接收的参数类型
 1. `file` 对象。`File`
 2. 字符串路径。`String`
@@ -2165,15 +2165,329 @@ class PrintWriterDemoA
 }
 ```
 
+## 合并流 `SequenceInputStream`
+
+(20/SequenceInputStreamDemoA)
+
+```java
+import java.io.*;
+import java.util.*;
+
+class SequenceInputStreamDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		Vector<FileInputStream> v = new Vector<FileInputStream>();
+		v.add(new FileInputStream("11.txt"));
+		v.add(new FileInputStream("22.txt"));
+		v.add(new FileInputStream("33.txt"));
+
+		Enumeration<FileInputStream> en = v.elements();
+		
+		SequenceInputStream sis = new SequenceInputStream(en);
+		BufferedReader bufr = new BufferedReader(new InputStreamReader(sis));
+
+		String line = null;
+
+		BufferedWriter bufw = new BufferedWriter(new FileWriter("44.txt"));
+
+		while((line = bufr.readLine()) != null)
+		{
+			bufw.write(line);
+			bufw.newLine();
+			bufw.flush();
+		}
+
+		bufr.close();
+		bufw.close();
+	}
+}
+```
+
+## 分割流
+
+`byte[] buf = new byte[1024 * 1024];` 字节流，限制分卷大小。 
 
 
+(20/SplitFileDemoA)
+
+```java
+import java.io.*;
+import java.util.*;
+
+class SplitFileDemoA
+{
+	public static void main(String[] args) throws IOException
+	{
+		File f = new File("splitFile\\1.mp3");
+		splitFile(f);
+		
+
+		Vector<FileInputStream> v = new Vector<FileInputStream>();
+		v.add(new FileInputStream("splitFile\\1.part"));
+		v.add(new FileInputStream("splitFile\\2.part"));
+		v.add(new FileInputStream("splitFile\\3.part"));
+		v.add(new FileInputStream("splitFile\\4.part"));
+		Enumeration<FileInputStream> en = v.elements();
+
+		File mergyFile = new File("splitFile\\111.mp3");
+
+		mergy(en, mergyFile);
 
 
+		
+		mergy2();
+	}
 
+	public static void mergy2() throws IOException
+	{
+		ArrayList<FileInputStream> arrs = new ArrayList<FileInputStream>();
+		for(int x = 1; x < 5; x++)
+		{
+			arrs.add(new FileInputStream("splitFile\\" + x + ".part"));
+		}
 
+		Iterator<FileInputStream> it = arrs.iterator();
 
+		Enumeration<FileInputStream> en = new Enumeration<FileInputStream>(){
+			public boolean hasMoreElements()
+			{
+				return it.hasNext();
+			}
+			public FileInputStream nextElement()
+			{
+				return it.next();
+			}
+		};
 
+		SequenceInputStream sis = new SequenceInputStream(en);
 
+		BufferedOutputStream bufos = new BufferedOutputStream(new FileOutputStream("splitFile\\22222.mp3"));
+
+		byte[] buf = new byte[1024];
+
+		int len = 0;
+
+		while((len = sis.read(buf)) != -1)
+		{
+			bufos.write(buf);
+			bufos.flush();
+		}
+
+		sis.close();
+		bufos.close();
+	}
+
+	public static void splitFile(File file) throws IOException
+	{
+		FileInputStream fis = new FileInputStream(file);
+
+		byte[] buf = new byte[1024 * 1024];
+
+		int len = 0, count = 1;
+
+		FileOutputStream fos = null;
+
+		while((len = fis.read(buf)) != -1)
+		{
+			fos = new FileOutputStream("splitFile\\" + (count++) + ".part");
+			fos.write(buf, 0, len);
+			fos.close();
+		}
+
+		fis.close();
+	}
+
+	public static void mergy(Enumeration<FileInputStream> en, File file) throws IOException
+	{
+		SequenceInputStream sis = new SequenceInputStream(en);
+
+		BufferedOutputStream bufos = new BufferedOutputStream(new FileOutputStream(file));
+
+		byte[] buf = new byte[1024*1024];
+
+		int len = 0;
+
+		while((len = sis.read(buf)) != -1)
+		{
+			bufos.write(buf, 0, len);
+			bufos.flush();
+		}
+
+		bufos.close();
+		sis.close();
+
+	}
+}
+```
+
+## 对象的序列化 ObjectOutputStream & ObjectInputStream
+
+**强烈建议** 
+
+	所有可序列化类都显式声明 serialVersionUID 值，
+	原因是计算默认的 serialVersionUID 对类的详细信息具有较高的敏感性，
+	根据编译器实现的不同可能千差万别，
+	这样在反序列化过程中可能会导致意外的 InvalidClassException。
+	因此，为保证 serialVersionUID 值跨不同 java 编译器实现的一致性，
+	序列化类必须声明一个明确的 serialVersionUID 值。
+	还强烈建议使用 private 修饰符显示声明 serialVersionUID（如果可能），
+	原因是这种声明仅应用于直接声明类 -- serialVersionUID 字段作为继承成员没有用处
+
+`static` 修饰的成员是不能被序列化的。
+`transient` 修饰的成员是不能被序列化的。
+
+(21/Person)
+
+```java
+import java.io.*;
+
+class Person implements Serializable
+{
+	private static final long serialVersionUID = 42L;
+
+	private String name;
+	private int age;
+	// private int agee;
+	transient String country = "default";
+	static String sex = "man";
+
+	Person(String name, int age, String country, String sex)
+	{
+		this.name = name;
+		this.age = age;
+		this.country = country;
+		this.sex = sex;
+	}
+
+	public String toString()
+	{
+		return this.name + " : " + this.age + " : " + this.country + " : " + this.sex;
+	}
+}
+```
+
+(21/ObjectStreamDemoA)
+
+```java
+import java.io.*;
+
+class ObjectStreamDemoA
+{
+	public static void main(String[] args) throws Exception
+	{
+		// writeObj();
+		readObj();
+	}
+
+	public static void writeObj() throws IOException
+	{
+		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("person.object"));
+		oos.writeObject(new Person("lili", 10, "cn", "AA"));
+		oos.writeObject(new Person("yiyi", 20, "en", "BB"));
+		oos.writeObject(new Person("cici", 30, "kr", "CC"));
+
+		oos.close();
+	}
+	public static void readObj() throws Exception
+	{
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream("person.object"));
+
+		Person p1 = (Person)ois.readObject();
+		Person p2 = (Person)ois.readObject();
+		Person p3 = (Person)ois.readObject();
+
+		System.out.println(p1);
+		System.out.println(p2);
+		System.out.println(p3);
+
+		ois.close();
+	}
+}
+```
+
+## 管道流 PipedInputStream & PipedOutputStream
+
+```java
+import java.io.*;
+
+class Read implements Runnable
+{
+	private PipedInputStream in;
+
+	Read(PipedInputStream in)
+	{
+		this.in = in;
+	}
+
+	public void run()
+	{
+		try
+		{
+			byte[] buf = new byte[1024];
+
+			System.out.println("Before read, no data, blocking");
+
+			int len = in.read(buf);
+
+			System.out.println("After read, have data, block end");
+
+			String s = new String(buf, 0, len);
+
+			System.out.println(s);
+
+			in.close();
+		}
+		catch(IOException e)
+		{
+			throw new RuntimeException("Piped read failed!");
+		}
+	}
+}
+
+class Write implements Runnable
+{
+	private PipedOutputStream out;
+
+	Write(PipedOutputStream out)
+	{
+		this.out = out;
+	}
+
+	public void run()
+	{
+		try
+		{
+			System.out.println("Begin to write, wait 3 seconds");
+
+			Thread.sleep(3000);
+
+			out.write("Piped lai la".getBytes());
+
+			out.close();
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException("Piped write failed!");
+		}
+	}
+}
+
+class PipedStreamDemoA
+{
+	public static void main(String[] args) throws Exception
+	{
+		PipedInputStream in = new PipedInputStream();
+		PipedOutputStream out = new PipedOutputStream();
+		in.connect(out);
+
+		Read r = new Read(in);
+		Write w = new Write(out);
+		new Thread(r).start();
+		new Thread(w).start();
+	}
+}
+```
 
 
 
